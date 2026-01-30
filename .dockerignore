@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Next.js build output (will be rebuilt in container)
+.next
+
+# Git
+.git
+.gitignore
+
+# Environment files (secrets added separately)
+.env*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in container)
+*.md
+docs/
+
+# Development files
+*.log
+coverage/
+.nyc_output/
