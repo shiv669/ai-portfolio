@@ -1,8 +1,9 @@
 import { generateObject } from "ai"
 import { google } from "@ai-sdk/google"
 import { z } from "zod"
-import { portfolioData, fallbackResponses, mapQueryToFallback, type PanelResponse } from "@/lib/portfolio-data"
+import { fallbackResponses, mapQueryToFallback, type PanelResponse } from "@/lib/portfolio-data"
 import { getCachedResponse, setCachedResponse, checkRateLimit } from "@/lib/cache"
+import { ragSearch, formatContextForLLM } from "@/lib/rag/search"
 
 const contentBlockSchema = z.object({
   type: z.enum(["text", "image", "bullets"]).describe("Type of content block"),
@@ -27,7 +28,7 @@ const panelResponseSchema = z.object({
     description: z.string().describe("Main description text, 2-4 sentences max"),
     highlightedWords: z
       .array(z.string())
-      .max(5)
+      .max(12)
       .describe("Important words/phrases to highlight with pointer animation (must exist exactly in description)"),
     bulletPoints: z.array(z.string()).max(6).optional().describe("Optional bullet points for lists"),
     contentBlocks: z
@@ -39,14 +40,23 @@ const panelResponseSchema = z.object({
   }),
   suggestions: z.array(z.string()).max(5).describe("Related queries to explore (max 3 preferred)"),
   canContinue: z.boolean().describe("Whether user can continue exploring this topic"),
+  searchPlaceholder: z.string().max(50).describe("A short 5-6 word AI opinion/prompt for the follow-up search box placeholder"),
+  citations: z.array(z.object({
+    key: z.string().describe("Unique key matching [key] marker in description text"),
+    title: z.string().describe("Preview card title"),
+    subtitle: z.string().describe("Preview card subtitle/description"),
+    imageUrl: z.string().describe("Image URL for preview card (use Unsplash or project image)"),
+    link: z.string().optional().describe("URL to redirect when citation is clicked (GitHub repo, live site, LinkedIn, etc. from portfolio data)")
+  })).max(4).optional().describe("Citations referenced in description as [key] markers")
 })
 
-const systemPrompt = `You are a neutral, factual information retrieval system for Shivam Gawali's portfolio.
+// Base system prompt - context will be injected dynamically
+const baseSystemPrompt = `You are a neutral, factual information retrieval system for Shivam Gawali's portfolio.
 
 CRITICAL RULES:
-1. You can ONLY use information from the provided portfolio data below
+1. You can ONLY use information from the RETRIEVED CONTEXT below
 2. You MUST NOT invent, assume, or hallucinate ANY information
-3. If the query asks about something not in the data, return type "unknown"
+3. If the retrieved context doesn't answer the query, return type "unknown"
 4. Keep descriptions concise (2-4 sentences max)
 5. highlightedWords MUST be exact words/phrases that exist in your description
 6. BE NEUTRAL AND HONEST - do not oversell or use promotional language
@@ -65,17 +75,27 @@ POINTER HIGHLIGHT:
 - Choose 2-4 most important terms that appear in the description
 - Words MUST appear exactly as written in the description text
 
-PORTFOLIO DATA (This is your ONLY source of truth):
-${JSON.stringify(portfolioData, null, 2)}
+CITATIONS (STRICT LIMITS):
+- MAXIMUM 3 CITATIONS TOTAL - be very selective!
+- Only cite major projects mentioned in the retrieved context
+- Use [key] markers in description text, provide matching citation objects
+- Citation object format: {key, title, subtitle, imageUrl, link}
+- imageUrl: Use Unsplash (e.g., https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=280&h=160&fit=crop)
+- link: Include the relevant URL from portfolio data (GitHub repo, live site, LinkedIn, etc.)
+  - For projects: use GitHub or live site URL from the project's links
+  - For contact/social: use the platform URL (LinkedIn, GitHub profile, etc.)
+- Example: "He built [still]" → citations: [{key: "still", title: "Still", subtitle: "...", imageUrl: "...", link: "https://github.com/shiv669/still"}]
+- DO NOT cite common technologies like JavaScript, React, etc.
 
 OUTPUT FORMAT:
 - title: Clear, descriptive title
 - type: Match to appropriate category  
-- content.description: Factual, neutral summary from portfolio data only
-- content.highlightedWords: Key terms that appear in description
-- content.bulletPoints: Optional list items
+- content.description: Factual, neutral summary with [key] citation markers where appropriate
+- content.highlightedWords: Key terms that appear in description (excluding [key] markers)
+- citations: Array of citation objects for each [key] used
 - suggestions: 2-3 related topics the user might explore
-- canContinue: true if more detail is available in data`
+- canContinue: true if more detail is available
+- searchPlaceholder: A short 5-6 word engaging prompt for the follow-up search`
 
 export async function POST(req: Request) {
   try {
@@ -112,18 +132,31 @@ export async function POST(req: Request) {
       })
     }
 
-    // Try Gemini API
+    // Try RAG + Gemini API
     try {
+      // Step 1: Semantic search to retrieve relevant chunks
+      const searchResult = await ragSearch(query)
+      const retrievedContext = formatContextForLLM(searchResult)
+
+      console.log(`RAG Search: intent=${searchResult.intent}, chunks=${searchResult.results.length}, fallback=${searchResult.fallbackUsed}`)
+
+      // Step 2: Build dynamic system prompt with retrieved context
+      const systemPrompt = `${baseSystemPrompt}
+
+RETRIEVED CONTEXT (This is your ONLY source of truth):
+${retrievedContext}`
+
+      // Step 3: Generate response with Gemini
       const prompt = context
-        ? `Previous topic: "${context}"\nUser wants to know more: "${query}"\n\nProvide additional details or deeper information about this topic based on the portfolio data. Be factual and neutral.`
-        : `User query: "${query}"\n\nProvide relevant information from the portfolio data. Be factual and neutral in tone.`
+        ? `Previous topic: "${context}"\nUser wants to know more: "${query}"\n\nProvide additional details based on the retrieved context. Be factual and neutral.`
+        : `User query: "${query}"\n\nProvide relevant information from the retrieved context. Be factual and neutral in tone.`
 
       const { object } = await generateObject({
-        model: google("gemini-2.5-flash"),
+        model: google("gemini-3-flash-preview"),
         schema: panelResponseSchema,
         system: systemPrompt,
         prompt,
-        maxRetries: 1, // Reduce retries to avoid quota issues
+        maxRetries: 1,
       })
 
       const response = object as PanelResponse
@@ -133,6 +166,11 @@ export async function POST(req: Request) {
         success: true,
         data: response,
         cached: false,
+        rag: {
+          intent: searchResult.intent,
+          chunksRetrieved: searchResult.results.length,
+          fallbackUsed: searchResult.fallbackUsed
+        }
       })
     } catch (geminiError) {
       console.error("Gemini API error, using fallback:", geminiError)

@@ -1,15 +1,22 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, memo, useState } from "react"
 
 interface LiquidEffectAnimationProps {
   imageUrl?: string
   canvasId?: string
 }
 
-export function LiquidEffectAnimation({ imageUrl = '/images/shivam-gawali.jpg', canvasId = 'liquid-canvas' }: LiquidEffectAnimationProps) {
+/**
+ * LiquidEffectAnimation - Three.js liquid effect
+ * OPTIMIZED: Lower pixel ratio for desktop to reduce GPU load
+ */
+export const LiquidEffectAnimation = memo(function LiquidEffectAnimation({
+  imageUrl = '/images/shivam-gawali.jpg',
+  canvasId = 'liquid-canvas',
+}: LiquidEffectAnimationProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const scriptRef = useRef<HTMLScriptElement | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -18,36 +25,33 @@ export function LiquidEffectAnimation({ imageUrl = '/images/shivam-gawali.jpg', 
     const scriptId = `__liquidScript_${canvasId}`
     let isMounted = true
 
-    // Thorough cleanup of previous instance
+    // Cleanup any previous instance
     const cleanupPrevious = () => {
       try {
-        if (window[appKey as keyof Window]) {
-          const app = window[appKey as keyof Window] as any
-          if (app.dispose) {
-            app.dispose()
-          }
-          // Also try to clean up renderer if available
-          if (app.renderer) {
-            app.renderer.dispose()
-            app.renderer.forceContextLoss()
+        const existingApp = window[appKey as keyof Window] as any
+        if (existingApp) {
+          if (existingApp.clock) existingApp.clock.stop()
+          if (existingApp.dispose) existingApp.dispose()
+          if (existingApp.renderer) {
+            existingApp.renderer.dispose()
+            existingApp.renderer.forceContextLoss()
           }
           delete window[appKey as keyof Window]
         }
+        const oldScript = document.getElementById(scriptId)
+        if (oldScript) oldScript.remove()
       } catch (e) {
         console.warn('[LiquidEffect] Cleanup warning:', e)
       }
-
-      // Remove old script if exists
-      const oldScript = document.getElementById(scriptId)
-      if (oldScript && oldScript.parentNode) {
-        oldScript.parentNode.removeChild(oldScript)
-      }
     }
 
-    // Clean up any previous instance first
     cleanupPrevious()
 
-    // Small delay to ensure cleanup is complete before re-initializing
+    // Use lower pixel ratio for desktop (larger screens = more pixels)
+    const isDesktop = window.innerWidth >= 1024
+    // Desktop: 1.0, Mobile: cap at 1.5
+    const pixelRatio = isDesktop ? 1.0 : Math.min(window.devicePixelRatio, 1.5)
+
     const initTimeout = setTimeout(() => {
       if (!isMounted || !canvasRef.current) return
 
@@ -60,11 +64,15 @@ export function LiquidEffectAnimation({ imageUrl = '/images/shivam-gawali.jpg', 
         const canvas = document.getElementById('${canvasId}');
         if (canvas && !window['${appKey}']) {
           try {
-            const app = LiquidBackground(canvas);
+            const app = LiquidBackground(canvas, {
+              pixelRatio: ${pixelRatio}
+            });
             app.loadImage('${imageUrl}');
             app.liquidPlane.material.metalness = 0.2;
             app.liquidPlane.material.roughness = 0.8;
             app.liquidPlane.uniforms.displacementScale.value = 5;
+            
+            // Reduce lighting for performance
             if (app.scene && app.scene.children) {
               app.scene.children.forEach(child => {
                 if (child.isLight) {
@@ -73,28 +81,46 @@ export function LiquidEffectAnimation({ imageUrl = '/images/shivam-gawali.jpg', 
               });
             }
             app.setRain(false);
+            
             window['${appKey}'] = app;
+            window.dispatchEvent(new CustomEvent('liquidEffectReady', { detail: '${canvasId}' }));
           } catch (e) {
             console.error('[LiquidEffect] Initialization error:', e);
           }
         }
       `
       document.body.appendChild(script)
-      scriptRef.current = script
-    }, 100)
+    }, 50)
+
+    const handleReady = (e: CustomEvent) => {
+      if (e.detail === canvasId && isMounted) {
+        setIsLoaded(true)
+      }
+    }
+    window.addEventListener('liquidEffectReady', handleReady as EventListener)
 
     return () => {
       isMounted = false
       clearTimeout(initTimeout)
+      window.removeEventListener('liquidEffectReady', handleReady as EventListener)
       cleanupPrevious()
     }
   }, [imageUrl, canvasId])
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Canvas container */}
-      <div className="absolute inset-0 w-full h-full">
-        <canvas ref={canvasRef} id={canvasId} className="w-full h-full object-cover" />
+      <div className="absolute inset-0 w-full h-full"
+        style={{
+          opacity: isLoaded ? 1 : 0,
+          transition: 'opacity 0.5s ease-out',
+          contain: 'strict'
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          id={canvasId}
+          className="w-full h-full object-cover"
+        />
       </div>
 
       <div
@@ -106,7 +132,7 @@ export function LiquidEffectAnimation({ imageUrl = '/images/shivam-gawali.jpg', 
       />
     </div>
   )
-}
+})
 
 declare global {
   interface Window {

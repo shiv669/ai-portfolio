@@ -50,111 +50,184 @@ export const portfolioData = {
   identity: {
     name: "Shivam Gawali",
     role: "AI & Data Science Student",
-    focus: ["Backend system design", "Correctness", "Learning through iteration", "Explicit modeling and invariants"],
-    philosophy: "I prefer understanding fundamentals deeply before moving to abstractions.",
+    summary:
+      "I am a college student studying Artificial Intelligence and Data Science with a strong interest in software engineering fundamentals and backend system design. I build small, focused systems to understand how they work internally, prioritizing correctness, clarity, and learning through iteration over feature count or polish.",
+    philosophy:
+      "I prefer understanding fundamentals deeply before moving to abstractions, and I learn best by building end-to-end systems and documenting mistakes instead of hiding them.",
   },
 
   links: {
     github: "https://github.com/shiv669",
-    holopin: "https://holopin.io/@shiv669",
-    instagram: "https://www.instagram.com/thpersnshivam",
     linkedin: "https://www.linkedin.com/in/shivam-gawali-0b7122224",
+    instagram: "https://www.instagram.com/thpersnshivam",
+    devto: "https://dev.to/shiv669",
+    devpost: "https://devpost.com/shivamgawali585",
+    leetcode: "https://leetcode.com/u/Glorious-Vulture/",
+  },
+
+  dsa: {
+    status: "Currently learning DSA and trying to grind LeetCode. I might be early but I am still learning and trying to do DSA in C++ to grasp a strong foundation on every topic."
   },
 
   projects: [
     {
       name: "Still",
+      status: "Completed",
+      category: "Web system / community platform",
       tagline: "A forum where answers expire unless they're still true.",
-      concept: "Answers fade unless proven correct over time.",
-      theme: "Correctness over popularity",
-      achievement: "Vercel x Foru.ms Hackathon Featured Winner",
+      problem:
+        "Most technical forums reward popularity and upvotes, even when answers become outdated. This leads to stale information ranking higher than correctness.",
+      approach: [
+        "Introduced time-based freshness windows depending on topic volatility",
+        "Used confidence scores instead of permanent upvotes",
+        "Allowed community verification through 'Still True' and 'Outdated' signals",
+        "Ensured the system works even without AI using deterministic fallbacks",
+      ],
+      behavior:
+        "Answers automatically decay over time and can be marked stale regardless of popularity, enforcing honesty by default.",
+      role: "End-to-end system design and implementation",
+      recognition: "Featured Selection — Vercel x Foru.ms Hackathon",
+      links: {
+        github: "https://github.com/shiv669/still",
+        live: "https://still-systems.vercel.app/",
+      },
     },
+
+    {
+      name: "Code Review System",
+      status: "Learning-focused / Active",
+      category: "Backend system design exploration",
+      tagline: "A minimal code review workflow focused on preserving context over time.",
+      problem:
+        "Code review discussions often lose context as code evolves, leading to ambiguous or outdated feedback.",
+      approach: [
+        "Modeled immutable revisions",
+        "Explicit state transitions for review lifecycle",
+        "Revision-scoped feedback instead of global comments",
+      ],
+      learningFocus:
+        "Understanding how real review systems model state, history, and feedback to avoid ambiguity.",
+      links: {
+        github: "https://github.com/shiv669/code-review-system",
+      },
+    },
+
     {
       name: "Trace",
-      tagline: "Detects interruptions and guides users back physically.",
-      domain: "Cognitive continuity",
-      techniques: ["Kalman filtering", "Madgwick fusion", "Behavioral variance detection"],
-      principles: ["Privacy first", "Local processing", "Human guidance over instruction"],
+      status: "Conceptual / Prototype",
+      category: "AI + spatial interaction",
+      tagline: "A cognitive continuity concept exploring interruption recovery.",
+      problem:
+        "Frequent interruptions break cognitive flow and make it difficult for users to resume tasks effectively.",
+      approach: [
+        "Explored spatial cues and behavioral signals",
+        "Focused on guiding users back rather than instructing them",
+        "Designed with privacy-first and local processing principles in mind",
+      ],
+      context: "Imagine Cup 2026 submission",
+      links: {
+        github: "https://github.com/trace-spatial",
+      },
     },
+
+    {
+      name: "TRINERA",
+      status: "Hackathon / Prototype",
+      category: "AI-powered application",
+      tagline: "An agricultural pest detection assistant for farmers.",
+      problem:
+        "Farmers often lack immediate access to expert knowledge for identifying and managing crop pests.",
+      approach: [
+        "Computer vision for pest identification",
+        "Conversational AI for guidance",
+        "FastAPI backend with Next.js frontend",
+      ],
+      techStack: ["Next.js", "FastAPI", "Python"],
+      links: {
+        github: "https://github.com/shiv669/TRINERA",
+      },
+    },
+
+    {
+      name: "LocalAid Connect",
+      status: "Completed (Hackathon)",
+      category: "Community platform",
+      tagline: "A real-time emergency response platform for local communities.",
+      problem:
+        "During crises, people in need often struggle to connect quickly with nearby helpers.",
+      approach: [
+        "Real-time coordination using Appwrite",
+        "Simple role-based flows for helpers and requesters",
+        "Focused on reliability over visual complexity",
+      ],
+      context: "Appwrite Hacktoberfest 2025",
+      links: {
+        github: "https://github.com/shiv669/LocalAid",
+        live: "https://localaid.appwrite.network/",
+      },
+    },
+
+    {
+      name: "Memory Manager (C++)",
+      status: "Ongoing",
+      category: "Systems programming",
+      tagline: "A learning project to understand memory management internals.",
+      learningFocus:
+        "Exploring how low-level memory allocation works in C++ and how design decisions affect correctness and safety.",
+    },
+
     {
       name: "Ravel Core",
-      type: "System design learning project",
+      status: "Exploratory",
+      category: "System design learning",
+      learningFocus:
+        "Understanding core system design concepts through small, focused experiments.",
     },
+
     {
       name: "Ravel Insights",
-      type: "Applied ML monitoring exploration",
+      status: "Exploratory",
+      category: "Applied ML learning",
+      learningFocus:
+        "Exploring how monitoring and insights can be built on top of system data.",
     },
   ],
 
   skills: {
     languages: ["JavaScript", "C", "C++", "SQL"],
     backend: ["Node.js", "Express", "REST APIs"],
-    databases: ["SQLite", "MySQL"],
-    frontend: ["React", "Vite"],
-    tools: ["Git", "Docker", "Linux"],
-    learningFocus: ["Relational modeling", "State invariants", "API correctness", "System behavior over time"],
+    databases: ["SQLite", "MySQL", "Relational data modeling"],
+    frontend: ["React", "Vite", "Basic UI integration"],
+    tools: ["Git", "GitHub", "Docker", "Linux basics"],
+    focus:
+      "Backend system design, correctness, explicit state modeling, and learning how data models affect system behavior over time.",
+  },
+
+  creativeWork: {
+    domain: "Video editing and visual storytelling",
+    experience:
+      "Freelance video editor working with creators in India and internationally, primarily on educational long-form and short-form content.",
+    tools: ["After Effects", "Premiere Pro", "CapCut"],
+    perspective:
+      "My interest in video editing influences how I think about pacing, clarity, and structure in software and user experience.",
+  },
+
+  openSourceAndCommunity: {
+    programs: ["Hacktoberfest"],
+    contributions: [
+      "Top 10 contributor at Goose",
+      "Contributions to Goose and Travel-Grid repositories",
+    ],
+    learning:
+      "Learned collaborative development through issues, pull requests, and reviews.",
   },
 
   learningStyle: [
-    "Build end to end systems",
-    "Validate assumptions through code",
-    "Document mistakes",
-    "Refine mental models iteratively",
+    "Build end-to-end systems",
+    "Validate assumptions through implementation",
+    "Document mistakes instead of hiding them",
+    "Refine mental models through iteration",
   ],
-
-  failureStory: {
-    title: "The Overengineering Trap",
-    content: `Early in my journey, I spent three weeks building a "perfect" authentication system 
-for a side project. I implemented JWT refresh tokens, rate limiting, OAuth2 flows, and 
-session management - before writing a single line of actual application code. The project 
-never launched. I learned that correctness matters, but shipping matters more. Now I start 
-with the simplest working version and iterate based on real needs, not imagined ones.`,
-  },
-
-  learningPath: [
-    {
-      phase: "Foundation",
-      period: "2022",
-      focus: "C/C++ fundamentals, data structures, algorithms",
-    },
-    {
-      phase: "Web Development",
-      period: "2023",
-      focus: "JavaScript, Node.js, React, REST APIs",
-    },
-    {
-      phase: "System Design",
-      period: "2024",
-      focus: "Database modeling, state machines, distributed systems basics",
-    },
-    {
-      phase: "AI/ML Integration",
-      period: "2025-Present",
-      focus: "Applied ML, sensor fusion, behavioral modeling, AI-powered applications",
-    },
-  ],
-
-  resumeText: `SHIVAM GAWALI
-AI & Data Science Student
-
-SKILLS
-Languages: JavaScript, C, C++, SQL
-Backend: Node.js, Express, REST APIs  
-Databases: SQLite, MySQL
-Frontend: React, Vite
-Tools: Git, Docker, Linux
-
-PROJECTS
-• Still - Forum where answers expire unless proven correct (Vercel x Foru.ms Hackathon Winner)
-• Trace - Cognitive continuity system using Kalman filtering and sensor fusion
-• Ravel Core - System design learning project
-• Ravel Insights - Applied ML monitoring exploration
-
-FOCUS AREAS
-Backend system design, Correctness-first engineering, Explicit modeling and invariants
-
-PHILOSOPHY
-Understanding fundamentals deeply before moving to abstractions.`,
 }
 
 // Type exports
@@ -178,12 +251,22 @@ export interface ResultContent {
   deeperContext?: string
 }
 
+export interface Citation {
+  key: string
+  title: string
+  subtitle: string
+  imageUrl: string
+  link?: string
+}
+
 export interface PanelResponse {
   title: string
   type: PanelType
   content: ResultContent
   suggestions: string[]
   canContinue: boolean
+  searchPlaceholder?: string
+  citations?: Citation[]
 }
 
 // Fallback responses when Gemini is unavailable
@@ -193,15 +276,15 @@ export const fallbackResponses: Record<string, PanelResponse> = {
     type: "summary",
     content: {
       title: "Career Summary",
-      description: `${portfolioData.identity.name} is an ${portfolioData.identity.role} focused on backend system design and correctness-first engineering. With expertise in JavaScript, C/C++, and SQL, he builds systems that prioritize explicit modeling and invariants. His philosophy: "${portfolioData.identity.philosophy}"`,
-      highlightedWords: ["backend system design", "correctness-first engineering", "explicit modeling"],
+      description: `${portfolioData.identity.name} is an ${portfolioData.identity.role} focused on backend system design and correctness-first engineering. ${portfolioData.identity.summary}`,
+      highlightedWords: ["backend system design", "correctness", "learning through iteration"],
       bulletPoints: [
         "Vercel x Foru.ms Hackathon Featured Winner with 'Still'",
-        "Focus areas: " + portfolioData.identity.focus.join(", "),
-        "Approach: Build end-to-end systems and validate through code",
+        "Top 10 contributor at Goose (Open Source)",
+        "Focus: Build end-to-end systems and validate through code",
       ],
     },
-    suggestions: ["Top projects", "Skills overview", "Learning path"],
+    suggestions: ["Top projects", "Skills overview", "Open source contributions"],
     canContinue: true,
   },
   top_projects: {
@@ -209,9 +292,9 @@ export const fallbackResponses: Record<string, PanelResponse> = {
     type: "projects",
     content: {
       title: "Top Projects",
-      description: `${portfolioData.identity.name} has built several notable projects focusing on correctness and system design. Still, his hackathon-winning project, explores how answers should fade unless proven correct over time. Trace tackles cognitive continuity using advanced sensor fusion techniques.`,
-      highlightedWords: ["Still", "Trace", "correctness", "sensor fusion"],
-      bulletPoints: portfolioData.projects.map((p) => `${p.name} - ${p.tagline || p.type}`),
+      description: `${portfolioData.identity.name} has built several notable projects focusing on correctness and system design. Still, his hackathon-winning project, explores how answers should fade unless proven correct over time. He also built LocalAid Connect for emergency response and TRINERA for agricultural pest detection.`,
+      highlightedWords: ["Still", "LocalAid Connect", "TRINERA", "correctness"],
+      bulletPoints: portfolioData.projects.slice(0, 5).map((p) => `${p.name} - ${p.tagline}`),
     },
     suggestions: ["Career summary", "Skills overview", "Contact information"],
     canContinue: true,
@@ -231,55 +314,21 @@ export const fallbackResponses: Record<string, PanelResponse> = {
         `Tools: ${portfolioData.skills.tools.join(", ")}`,
       ],
     },
-    suggestions: ["Top projects", "Learning path", "Resume format"],
+    suggestions: ["Top projects", "Open source", "Resume format"],
     canContinue: true,
-  },
-  failure_story: {
-    title: portfolioData.failureStory.title,
-    type: "failure",
-    content: {
-      title: portfolioData.failureStory.title,
-      description: portfolioData.failureStory.content,
-      highlightedWords: ["three weeks", "perfect", "never launched", "shipping matters more"],
-    },
-    suggestions: ["Learning path", "Top projects", "Career summary"],
-    canContinue: true,
-  },
-  learning_path: {
-    title: "Learning Path",
-    type: "learning_path",
-    content: {
-      title: "Learning Path",
-      description: `The learning journey started with C/C++ fundamentals in 2022, progressed through web development in 2023, moved to system design in 2024, and now focuses on AI/ML integration. The approach: build end-to-end systems, validate assumptions through code, document mistakes, and iteratively refine mental models.`,
-      highlightedWords: ["2022", "2023", "2024", "AI/ML integration"],
-      bulletPoints: portfolioData.learningPath.map((p) => `${p.phase} (${p.period}): ${p.focus}`),
-    },
-    suggestions: ["Skills overview", "Top projects", "Career summary"],
-    canContinue: true,
-  },
-  resume_format: {
-    title: "Resume",
-    type: "resume",
-    content: {
-      title: "Resume",
-      description: portfolioData.resumeText,
-      highlightedWords: [],
-    },
-    suggestions: ["Contact information", "Top projects", "Skills overview"],
-    canContinue: false,
   },
   contact_information: {
     title: "Contact Information",
     type: "contact",
     content: {
       title: "Contact Information",
-      description: `Connect with ${portfolioData.identity.name} through various platforms. GitHub for code and projects, LinkedIn for professional networking, Instagram for personal updates, and Holopin for developer badges and achievements.`,
-      highlightedWords: ["GitHub", "LinkedIn", "Instagram", "Holopin"],
+      description: `Connect with ${portfolioData.identity.name} through various platforms. GitHub for code and projects, LinkedIn for professional networking, DEV.to for articles, and LeetCode for DSA practice.`,
+      highlightedWords: ["GitHub", "LinkedIn", "DEV.to", "LeetCode"],
       bulletPoints: Object.entries(portfolioData.links).map(
         ([platform, url]) => `${platform.charAt(0).toUpperCase() + platform.slice(1)}: ${url}`,
       ),
     },
-    suggestions: ["Career summary", "Top projects", "Resume format"],
+    suggestions: ["Career summary", "Top projects", "Skills overview"],
     canContinue: false,
   },
   no_information: {
@@ -288,7 +337,7 @@ export const fallbackResponses: Record<string, PanelResponse> = {
     content: {
       title: "No Information Available",
       description:
-        "I don't have information about that in the portfolio. Try asking about projects, skills, career summary, learning path, failure stories, resume, or contact information.",
+        "I don't have information about that in the portfolio. Try asking about projects, skills, career summary, open source contributions, or contact information.",
       highlightedWords: [],
     },
     suggestions: ["Career summary", "Top projects", "Skills overview"],
@@ -301,13 +350,10 @@ export function mapQueryToFallback(query: string): string | null {
   const q = query.toLowerCase().trim()
 
   const mappings: Record<string, string[]> = {
-    career_summary: ["career", "summary", "about", "who", "introduction", "intro", "overview"],
-    top_projects: ["project", "projects", "work", "portfolio", "built", "made", "still", "trace", "ravel"],
-    skills_overview: ["skill", "skills", "tech", "technology", "stack", "languages", "expertise"],
-    failure_story: ["failure", "fail", "mistake", "lesson", "learned", "wrong"],
-    learning_path: ["learning", "path", "journey", "growth", "education", "progress"],
-    resume_format: ["resume", "cv", "download", "pdf", "document"],
-    contact_information: ["contact", "email", "reach", "connect", "social", "linkedin", "github", "instagram"],
+    career_summary: ["career", "summary", "about", "who", "introduction", "intro", "overview", "shivam"],
+    top_projects: ["project", "projects", "work", "portfolio", "built", "made", "still", "trace", "ravel", "trinera", "localaid"],
+    skills_overview: ["skill", "skills", "tech", "technology", "stack", "languages", "expertise", "know"],
+    contact_information: ["contact", "email", "reach", "connect", "social", "linkedin", "github", "instagram", "links"],
   }
 
   for (const [key, keywords] of Object.entries(mappings)) {

@@ -4,14 +4,24 @@ import type React from "react"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { getSuggestions, saveToHistory, isInappropriate, getSearchHistory } from "@/lib/search-utils"
 
+// Declare global animation controls
+declare global {
+  interface Window {
+    __pauseUnicornAnimation?: () => void
+    __resumeUnicornAnimation?: () => void
+  }
+}
+
 interface SearchComponentProps {
   onSearch?: (query: string) => void
   onResultClose?: () => void
   isSearching?: boolean
   compact?: boolean // Added compact prop for result view
+  desktopMode?: boolean // Added for laptop layout - suggestions go down, full width
+  customPlaceholder?: string // Custom placeholder text (e.g., from AI)
 }
 
-const SearchComponent = ({ onSearch, isSearching, compact = false }: SearchComponentProps) => {
+const SearchComponent = ({ onSearch, isSearching, compact = false, desktopMode = false, customPlaceholder }: SearchComponentProps) => {
   const [inputValue, setInputValue] = useState("")
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -20,11 +30,15 @@ const SearchComponent = ({ onSearch, isSearching, compact = false }: SearchCompo
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Update suggestions when input changes
+  // Update suggestions when input changes - DEBOUNCED for performance
   useEffect(() => {
-    const newSuggestions = getSuggestions(inputValue)
-    setSuggestions(newSuggestions)
-    setSelectedIndex(-1)
+    const debounceTimer = setTimeout(() => {
+      const newSuggestions = getSuggestions(inputValue)
+      setSuggestions(newSuggestions)
+      setSelectedIndex(-1)
+    }, 150) // 150ms debounce
+
+    return () => clearTimeout(debounceTimer)
   }, [inputValue])
 
   // Get recent searches for display
@@ -95,102 +109,92 @@ const SearchComponent = ({ onSearch, isSearching, compact = false }: SearchCompo
     return recentSearches.some((r) => r.toLowerCase() === suggestion.toLowerCase())
   }
 
-  const inputWidth = compact ? "w-[200px] md:w-[240px]" : "w-[260px]"
+  // Initial screen uses fixed width, only result panel (customPlaceholder mode) uses full width
+  const isResultPanel = !!customPlaceholder
+  const inputWidth = compact ? "w-[200px] md:w-[240px]" : isResultPanel ? "w-full max-w-[500px]" : "w-[260px]"
   const inputHeight = compact ? "h-[38px]" : "h-[46px]"
   const iconSize = compact ? "18" : "22"
   const iconTop = compact ? "top-[10px]" : "top-[12px]"
   const glowTop = compact ? "top-[6px]" : "top-[8px]"
 
   return (
-    <div className="relative flex items-center justify-center" ref={containerRef}>
+    <div className={`relative flex items-center justify-center ${isResultPanel ? 'w-full' : ''}`} ref={containerRef}>
       <div
-        className="relative flex items-center justify-center group rounded-xl"
+        className={`relative flex items-center justify-center group rounded-xl overflow-visible ${isResultPanel ? 'w-full' : ''}`}
         style={{
           boxShadow:
             "0 0 0 1px rgba(125, 211, 252, 0.15), 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
         }}
       >
+        {/* Torch-like glow effect behind search box */}
         {!compact && (
-          <>
-            <div className="absolute inset-0 rounded-xl overflow-hidden">
-              <div
-                className="absolute inset-[-100%] animate-[spin_4s_linear_infinite]"
-                style={{
-                  background:
-                    "conic-gradient(from 0deg, transparent, #7dd3fc 10%, transparent 20%, transparent 50%, #bae6fd 60%, transparent 70%)",
-                }}
-              />
-              <div
-                className="absolute inset-[-100%] animate-[spin_6s_linear_infinite_reverse]"
-                style={{
-                  background: "conic-gradient(from 180deg, transparent, #e0f2fe 10%, transparent 20%, transparent 70%)",
-                }}
-              />
-            </div>
-
-            <div className="absolute inset-[1px] rounded-xl overflow-hidden blur-sm">
-              <div
-                className="absolute inset-[-100%] animate-[spin_5s_linear_infinite]"
-                style={{
-                  background:
-                    "conic-gradient(from 90deg, transparent, #bae6fd 8%, transparent 16%, transparent 50%, #e0f2fe 58%, transparent 66%)",
-                }}
-              />
-            </div>
-          </>
+          <div className="absolute inset-0 rounded-xl overflow-hidden">
+            {/* Static gradient glow - like a torch light from bottom */}
+            <div
+              className="absolute inset-0 opacity-60 group-hover:opacity-80 transition-opacity duration-500"
+              style={{
+                background: 'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(125, 211, 252, 0.4) 0%, rgba(56, 189, 248, 0.2) 30%, transparent 70%)',
+              }}
+            />
+          </div>
         )}
 
         <div className="absolute inset-[2px] rounded-lg bg-[#010201]" />
 
-        <div className="relative">
+        <div className={`relative ${isResultPanel ? 'w-full' : ''}`}>
+          {/* Search Icon - positioned first for proper stacking */}
+          <div className={`absolute left-3 ${iconTop} z-30 pointer-events-none`}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width={iconSize}
+              height={iconSize}
+              viewBox="0 0 24 24"
+              fill="none"
+              className="text-sky-300"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle stroke="#7dd3fc" r="8" cy="11" cx="11"></circle>
+              <line stroke="#bae6fd" y2="16.65" y1="22" x2="16.65" x1="22"></line>
+            </svg>
+          </div>
+
           <input
             ref={inputRef}
-            placeholder={compact ? "Search..." : "Query this profile..."}
+            placeholder={customPlaceholder || (compact ? "Search..." : "Query this profile...")}
             type="text"
             name="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onFocus={() => setShowSuggestions(true)}
+            onFocus={() => {
+              setShowSuggestions(true)
+              // TEMPORARILY DISABLED FOR TESTING
+              // if (window.__pauseUnicornAnimation) {
+              //   window.__pauseUnicornAnimation()
+              // }
+            }}
+            onBlur={() => {
+              // TEMPORARILY DISABLED FOR TESTING
+              // if (window.__resumeUnicornAnimation) {
+              //   window.__resumeUnicornAnimation()
+              // }
+            }}
             onKeyDown={handleKeyDown}
             disabled={isSearching}
-            className={`relative bg-[#010201] border-none ${inputWidth} ${inputHeight} rounded-lg text-white pl-[42px] pr-4 ${compact ? "text-sm" : "text-base"} focus:outline-none placeholder-gray-400 disabled:opacity-50`}
+            className={`relative z-10 bg-transparent border-none ${inputWidth} ${inputHeight} rounded-lg text-white pl-[42px] pr-4 ${compact ? "text-sm" : "text-base"} focus:outline-none placeholder-gray-400 disabled:opacity-50`}
           />
           {!compact && (
             <div
-              className={`pointer-events-none w-[25px] h-[18px] absolute bg-[#7dd3fc] ${glowTop} left-[5px] blur-2xl opacity-60 transition-all duration-500 group-hover:opacity-0`}
+              className={`pointer-events-none absolute z-0 w-[25px] h-[18px] bg-[#7dd3fc] ${glowTop} left-[5px] blur-2xl opacity-60 transition-all duration-500 group-hover:opacity-0`}
             />
           )}
-          <div className={`absolute left-3 ${iconTop}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width={iconSize}
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              height={iconSize}
-              fill="none"
-            >
-              <circle stroke="url(#search)" r="8" cy="11" cx="11"></circle>
-              <line stroke="url(#searchl)" y2="16.65" y1="22" x2="16.65" x1="22"></line>
-              <defs>
-                <linearGradient gradientTransform="rotate(50)" id="search">
-                  <stop stopColor="#e0f2fe" offset="0%"></stop>
-                  <stop stopColor="#7dd3fc" offset="50%"></stop>
-                </linearGradient>
-                <linearGradient id="searchl">
-                  <stop stopColor="#7dd3fc" offset="0%"></stop>
-                  <stop stopColor="#bae6fd" offset="50%"></stop>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
         </div>
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
         <div
-          className={`absolute ${compact ? "top-full mt-2" : "bottom-full mb-3"} left-1/2 -translate-x-1/2 w-[280px] overflow-hidden z-50`}
+          className={`absolute ${compact || desktopMode ? "top-full mt-2" : "bottom-full mb-3"} left-1/2 -translate-x-1/2 ${desktopMode ? "w-full" : "w-[280px]"} overflow-hidden z-50`}
           style={{
             background: "rgba(8, 8, 12, 0.92)",
             backdropFilter: "blur(24px)",
@@ -207,9 +211,8 @@ const SearchComponent = ({ onSearch, isSearching, compact = false }: SearchCompo
                 key={suggestion}
                 onClick={() => handleSearch(suggestion)}
                 onMouseEnter={() => setSelectedIndex(index)}
-                className={`w-full px-3.5 py-2 flex items-center gap-2.5 text-left transition-all duration-200 ${
-                  selectedIndex === index ? "bg-sky-500/8" : ""
-                }`}
+                className={`w-full px-3.5 py-2 flex items-center gap-2.5 text-left transition-all duration-200 ${selectedIndex === index ? "bg-sky-500/8" : ""
+                  }`}
               >
                 <span className="flex-shrink-0 opacity-40">
                   {isFromHistory(suggestion) ? (

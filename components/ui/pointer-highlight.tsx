@@ -48,7 +48,7 @@ export function PointerHighlight({
       {children}
       {dimensions.width > 0 && dimensions.height > 0 && (
         <motion.span
-          className="pointer-events-none absolute inset-0 z-0"
+          className="pointer-events-none absolute inset-0 z-0 overflow-visible"
           initial={{ opacity: 0, scale: 0.95, originX: 0, originY: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
@@ -69,12 +69,12 @@ export function PointerHighlight({
             }}
           />
           <motion.span
-            className="pointer-events-none absolute"
-            initial={{ opacity: 0 }}
+            className="pointer-events-none absolute left-0 top-0"
+            initial={{ opacity: 0, x: 0, y: 0 }}
             whileInView={{
               opacity: 1,
-              x: dimensions.width + 4,
-              y: dimensions.height + 4,
+              x: dimensions.width - 2,
+              y: dimensions.height - 2,
             }}
             style={{
               rotate: -90,
