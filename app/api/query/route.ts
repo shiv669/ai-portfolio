@@ -2,7 +2,7 @@ import { generateObject } from "ai"
 import { google } from "@ai-sdk/google"
 import { z } from "zod"
 import { fallbackResponses, mapQueryToFallback, type PanelResponse } from "@/lib/portfolio-data"
-import { getCachedResponse, setCachedResponse, checkRateLimit } from "@/lib/cache"
+import { getCachedResponse, setCachedResponse, checkRateLimit, incrementDailyCallCount, isDailyQuotaExceeded } from "@/lib/cache"
 import { ragSearch, formatContextForLLM } from "@/lib/rag/search"
 
 const contentBlockSchema = z.object({
@@ -136,11 +136,55 @@ export async function POST(req: Request) {
     try {
       // Step 1: Semantic search to retrieve relevant chunks
       const searchResult = await ragSearch(query)
-      const retrievedContext = formatContextForLLM(searchResult)
 
-      console.log(`RAG Search: intent=${searchResult.intent}, chunks=${searchResult.results.length}, fallback=${searchResult.fallbackUsed}`)
+      // Check daily quota
+      const isQuotaExceeded = isDailyQuotaExceeded()
+
+      if (isQuotaExceeded) {
+        console.log("Daily quota exceeded. Using RAG chunks directly.")
+
+        // Use RAG chunks to build a fallback response
+        if (searchResult.results.length > 0) {
+          const topResult = searchResult.results[0]
+          const topChunk = topResult.chunk
+
+          const fallbackResponse: PanelResponse = {
+            title: topChunk.source.projectName || "Related Information",
+            type: searchResult.intent === "project" ? "projects" : "summary",
+            content: {
+              title: topChunk.source.projectName || "Search Result",
+              description: topChunk.text.length > 400 ? topChunk.text.substring(0, 400) + "..." : topChunk.text,
+              highlightedWords: [],
+            },
+            suggestions: ["Home", "Projects", "Skills"],
+            canContinue: false,
+            searchPlaceholder: "Checking GitHub...",
+            citations: [{
+              key: "source",
+              title: topChunk.source.projectName || "Source",
+              subtitle: "Indexed Content",
+              imageUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=280&h=160&fit=crop"
+            }]
+          }
+
+          return Response.json({
+            success: true,
+            data: fallbackResponse,
+            cached: false,
+            rag: {
+              intent: searchResult.intent,
+              chunksRetrieved: searchResult.results.length,
+              fallbackUsed: true
+            },
+            quotaReached: true
+          })
+        }
+      }
 
       // Step 2: Build dynamic system prompt with retrieved context
+      const retrievedContext = formatContextForLLM(searchResult)
+      console.log(`RAG Search: intent=${searchResult.intent}, chunks=${searchResult.results.length}, fallback=${searchResult.fallbackUsed}`)
+
       const systemPrompt = `${baseSystemPrompt}
 
 RETRIEVED CONTEXT (This is your ONLY source of truth):
@@ -159,6 +203,9 @@ ${retrievedContext}`
         maxRetries: 1,
       })
 
+      // Increment quota only on success
+      incrementDailyCallCount()
+
       const response = object as PanelResponse
       setCachedResponse(cacheKey, response)
 
@@ -170,7 +217,8 @@ ${retrievedContext}`
           intent: searchResult.intent,
           chunksRetrieved: searchResult.results.length,
           fallbackUsed: searchResult.fallbackUsed
-        }
+        },
+        quotaReached: false
       })
     } catch (geminiError) {
       console.error("Gemini API error, using fallback:", geminiError)

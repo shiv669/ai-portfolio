@@ -47,6 +47,8 @@ interface SimplifiedResultProps {
     isSearching?: boolean
     /** Citations from AI response */
     citations?: Citation[]
+    /** Whether the daily quota limit has been reached */
+    quotaReached?: boolean
 }
 
 // Hover link component for citations
@@ -218,7 +220,8 @@ export function SimplifiedResultPanel({
     onSearch,
     onHome,
     isSearching = false,
-    citations = []
+    citations = [],
+    quotaReached = false
 }: SimplifiedResultProps) {
     const [activePreview, setActivePreview] = useState<Citation | null>(null)
     const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -359,15 +362,27 @@ export function SimplifiedResultPanel({
                                 />
                             </div>
 
-                            <p
-                                className="mt-4 text-xs tracking-wide font-medium"
-                                style={{
-                                    color: "#1e293b",
-                                    textShadow: "0 0 10px rgba(255, 255, 255, 0.6), 0 0 20px rgba(255, 255, 255, 0.4)"
-                                }}
-                            >
-                                Type &quot;home&quot; to return • Powered by Gemini
-                            </p>
+                            {quotaReached ? (
+                                <p
+                                    className="mt-4 text-xs tracking-wide font-medium font-[inherit]"
+                                    style={{
+                                        color: "#000000",
+                                        textShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                                    }}
+                                >
+                                    Live AI quota reached. Showing results from indexed portfolio data using the same retrieval pipeline
+                                </p>
+                            ) : (
+                                <p
+                                    className="mt-4 text-xs tracking-wide font-medium"
+                                    style={{
+                                        color: "#1e293b",
+                                        textShadow: "0 0 10px rgba(255, 255, 255, 0.6), 0 0 20px rgba(255, 255, 255, 0.4)"
+                                    }}
+                                >
+                                    Type &quot;home&quot; to return • Powered by Gemini
+                                </p>
+                            )}
                         </motion.div>
                     )}
                 </div>

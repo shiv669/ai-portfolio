@@ -6,8 +6,24 @@ const responseCache = new Map<string, CacheEntry>()
 const rateLimitMap = new Map<string, RateLimitEntry>()
 
 const CACHE_TTL = 6 * 60 * 60 * 1000 // 6 hours in milliseconds
-const RATE_LIMIT = 10 // queries per minute
+const RATE_LIMIT = 10 // queries per minute from single IP
 const RATE_WINDOW = 60 * 1000 // 1 minute in milliseconds
+
+// Global daily limit (resets on instance restart/deployment)
+const DAILY_LIMIT = 12
+let dailyCallCount = 0
+
+export function isDailyQuotaExceeded(): boolean {
+  return dailyCallCount >= DAILY_LIMIT
+}
+
+export function incrementDailyCallCount(): void {
+  dailyCallCount++
+}
+
+export function getDailyCallCount(): number {
+  return dailyCallCount
+}
 
 export function getCachedResponse(query: string): PanelResponse | null {
   const normalizedQuery = query.toLowerCase().trim()

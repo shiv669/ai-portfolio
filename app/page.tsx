@@ -45,6 +45,7 @@ export default function Home() {
   const [queryHistory, setQueryHistory] = useState<string[]>([])
   const [backgroundLoaded, setBackgroundLoaded] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
+  const [quotaReached, setQuotaReached] = useState(false)
 
   // Detect if on desktop (lg breakpoint = 1024px)
   useEffect(() => {
@@ -91,6 +92,7 @@ export default function Home() {
     setIsSearching(true)
     setShowResult(true)
     setSearchResult(null)
+    setQuotaReached(false)
     setCurrentQuery(query)
     setQueryHistory((prev) => [...prev, query])
 
@@ -105,6 +107,7 @@ export default function Home() {
 
       if (data.success && data.data) {
         setSearchResult(data.data)
+        setQuotaReached(!!data.quotaReached)
       } else {
         setSearchResult({
           title: "Error",
@@ -191,6 +194,7 @@ export default function Home() {
                   onHome={handleBack}
                   isSearching={isSearching}
                   citations={searchResult?.citations}
+                  quotaReached={quotaReached}
                 />
               )}
             </motion.div>
